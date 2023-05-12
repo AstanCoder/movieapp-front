@@ -24,12 +24,13 @@ import React, { useState } from "react";
 import { services } from "../services/services";
 import AlertDialog from "../components/Dialog/AlertDialog";
 import { enqueueSnackbar } from "notistack";
+import { Edit, RemoveRedEye } from "@mui/icons-material";
 
 function AdminPanel({
   title,
   options,
   handleAction,
-
+  handleUpdate,
   selectedPage,
 }) {
   const [deleteId, setDeleteId] = useState(null);
@@ -78,12 +79,12 @@ function AdminPanel({
     closeAlert();
     setDeleteId(null);
     setDeleteText("");
-    window.location.reload()
+    window.location.reload();
   };
 
   const handleDeleteGenre = async (id) => {
     const res = await services.deleteGenres(id);
-    console.log(res)
+    console.log(res);
     if (res.status === 200 || res.status === 202 || res.status === 204) {
       enqueueSnackbar("Se Ha borrado el elemento con exito", {
         persist: false,
@@ -185,6 +186,11 @@ function AdminPanel({
                       }}
                     ></IconButton>
                   </Td>
+                  {selectedPage === "Peliculas" && (
+                    <Td>
+                      <IconButton icon={<Edit />} onClick={()=>handleUpdate(option.id)}></IconButton>
+                    </Td>
+                  )}
                 </Tr>
               );
             })}

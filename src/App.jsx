@@ -10,10 +10,7 @@ import {
   useDisclosure,
   Text,
 } from "@chakra-ui/react";
-import {
-  ArrowBackIcon,
-  ArrowForwardIcon
-} from "@chakra-ui/icons"
+import { ArrowBackIcon, ArrowForwardIcon } from "@chakra-ui/icons";
 import AppLayout from "./layouts/AppLayout";
 import MoviesPanel from "./pages/MoviesPanel";
 import AdminPanel from "./pages/AdminPanel";
@@ -36,6 +33,8 @@ function App() {
   const [_movies, set_movies] = useState(null);
   const [_genres, set_genres] = useState(null);
   const [_users, set_users] = useState(null);
+  const [isUpdate, setIsUpdate] = useState(false)
+  const [updateValues, setUpdateValues] = useState({})
 
   useEffect(() => {
     if (getCookie("token")) {
@@ -45,6 +44,7 @@ function App() {
     }
   }, []);
 
+  const {isOpen: openMovieForm, onOpen: onOpenMovieForm, onClose: onCloseMovieForm} = useDisclosure()
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const {
@@ -54,7 +54,6 @@ function App() {
     error,
   } = useQuery(["movies", page, perPage], services.listMovies, {
     keepPreviousData: true,
-    
   });
 
   const {
@@ -123,8 +122,37 @@ function App() {
     setSelectedPage(selection);
   };
 
+  const onUpdateMovie = (id) => {
+    let movie;
+    movies?.results?.map((data) => {
+      if (data.id === id) {
+        movie = data;
+      }
+    });
+
+    setUpdateValues(movie)
+    setIsUpdate(true)
+    onOpenMovieForm()
+
+  };
+
+  const onCloseUpdateMovieForm = ()=>{
+    setIsUpdate(false)
+    setUpdateValues({})
+    onCloseMovieForm()
+  }
+
   return (
     <>
+    <MoviesForm
+    isOpen={openMovieForm}
+    isUpdate={isUpdate}
+    onClose={onCloseUpdateMovieForm}
+    onOpen={onOpenMovieForm}
+    updateValues={updateValues}
+
+
+    />
       <Box backgroundColor="whiteAlpha.100">
         {isAuthenticated ? (
           <AppLayout
@@ -144,6 +172,7 @@ function App() {
                   handleAction={() => {
                     onOpen();
                   }}
+                  handleUpdate={onUpdateMovie}
                   title={"Listado de peliculas almacenadas en el sistema"}
                   selectedPage={selectedPage}
                 />
@@ -177,16 +206,22 @@ function App() {
             ) : (
               "ERROR"
             )}
-            <Stack direction="column" >
+            <Stack direction="column">
               <Text>Paginación</Text>
               <Stack direction="row" alignItems="center">
-                <IconButton icon={<ArrowBackIcon />} onClick={()=>{
-                 page > 1 ? setPage(page - 1) : ""
-                }}></IconButton>
+                <IconButton
+                  icon={<ArrowBackIcon />}
+                  onClick={() => {
+                    page > 1 ? setPage(page - 1) : "";
+                  }}
+                ></IconButton>
                 <Text>{page}</Text>
-                <IconButton icon={<ArrowForwardIcon />} onClick={()=>{
-                 setPage(page + 1)
-                }}></IconButton>
+                <IconButton
+                  icon={<ArrowForwardIcon />}
+                  onClick={() => {
+                    setPage(page + 1);
+                  }}
+                ></IconButton>
               </Stack>
             </Stack>
           </AppLayout>

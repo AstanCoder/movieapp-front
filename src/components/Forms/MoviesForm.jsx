@@ -19,7 +19,7 @@ import { set, useForm } from "react-hook-form";
 import { services } from "../../services/services";
 import { useSnackbar } from "notistack";
 import { useQuery } from "react-query";
-import { Spinner } from '@chakra-ui/react'
+import { Spinner } from "@chakra-ui/react";
 
 const defaultValues = {
   originalTitle: "",
@@ -40,6 +40,8 @@ function MoviesForm({
   onClose,
   uploadedData,
   closeUploadForm,
+  isUpdate,
+  updateValues,
 }) {
   const { data, isLoading, isSuccess, isError } = useQuery(
     ["genres"],
@@ -57,31 +59,65 @@ function MoviesForm({
 
   useEffect(() => {
     console.log(uploadedData);
-    if (uploadedData) {
+    if (uploadedData && !isUpdate) {
       setValue("video", uploadedData.video);
       setValue("remote_filename", uploadedData.remote_filename);
     }
-  }, [uploadedData, setValue]);
+  }, [uploadedData, setValue, isUpdate]);
+
+  useEffect(() => {
+    if (isUpdate) {
+      const keys = Object.keys(updateValues);
+      console.log(keys);
+      console.log(isUpdate);
+      console.log(updateValues);
+      for (let i = 0; i < keys.length; i++) {
+        setValue(`${keys[i]}`, updateValues[`${keys[i]}`]);
+      }
+    }
+  }, [isUpdate, updateValues, setValue]);
 
   const handleCreate = async (values) => {
-   return await services
-      .createMovie(values)
-      .then((data) => {
-        enqueueSnackbar("Pelicula creada con exito", {
-          persist: false,
-          variant: "success",
-        });
-        console.log(data)
-        onClose();
-        window.location.reload()
-        closeUploadForm()
-      })
-      .catch((err) =>
-        enqueueSnackbar("Ha ocurrido un error al crear la pelicula", {
-          persist: false,
-          variant: "error",
+    if (!isUpdate) {
+      return await services
+        .createMovie(values)
+        .then((data) => {
+          enqueueSnackbar("Pelicula creada con exito", {
+            persist: false,
+            variant: "success",
+          });
+          console.log(data);
+          onClose();
+          window.location.reload();
+          closeUploadForm();
         })
-      );
+        .catch((err) =>
+          enqueueSnackbar("Ha ocurrido un error al crear la pelicula", {
+            persist: false,
+            variant: "error",
+          })
+        );
+    } else {
+      values.id = updateValues.id;
+      return await services
+        .updateMovie(values)
+        .then((data) => {
+          enqueueSnackbar("Pelicula actualizada con exito", {
+            persist: false,
+            variant: "success",
+          });
+          console.log(data);
+          onClose();
+          window.location.reload();
+          closeUploadForm();
+        })
+        .catch((err) =>
+          enqueueSnackbar("Ha ocurrido un error al actualizar la pelicula", {
+            persist: false,
+            variant: "error",
+          })
+        );
+    }
   };
 
   return (
@@ -175,13 +211,15 @@ function MoviesForm({
                     name="genre_id"
                     {...register("genre_id")}
                   >
-                    {isSuccess
-                      ? data.results.map((genre) => (
-                          <option key={genre._id} value={genre._id}>
-                            {genre.genre}
-                          </option>
-                        ))
-                      : <option value={null}>No hay generos en el sistema</option>}
+                    {isSuccess ? (
+                      data.results.map((genre) => (
+                        <option key={genre._id} value={genre._id}>
+                          {genre.genre}
+                        </option>
+                      ))
+                    ) : (
+                      <option value={null}>No hay generos en el sistema</option>
+                    )}
                   </Select>
                 </Stack>
               </Stack>
@@ -192,7 +230,7 @@ function MoviesForm({
                   colorScheme="blue"
                   variant="solid"
                 >
-                  Crear
+                  {isUpdate ? "Actualizar" : "Crear"}
                 </Button>
               </Stack>
             </FormControl>

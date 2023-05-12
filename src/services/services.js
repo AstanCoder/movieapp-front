@@ -114,6 +114,15 @@ const deleteGenres = async (id) => {
     .then((data) => data);
 };
 
+const updateMovie = async (values) => {
+  return instance.post(`/movies/update/${values.id}`, JSON.stringify(values), {
+    headers: {
+      "Content-Type": "application/json",
+      "auth-token": getCookie("token"),
+    },
+  });
+};
+
 export const services = {
   listMovies,
   createMovie,
@@ -125,4 +134,5 @@ export const services = {
   deleteGenres,
   deleteMovie,
   deleteUsers,
+  updateMovie
 };
