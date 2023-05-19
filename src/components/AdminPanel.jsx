@@ -27,6 +27,7 @@ import { enqueueSnackbar } from "notistack";
 import { Edit, RemoveRedEye } from "@mui/icons-material";
 import RefferalsDialog from "./Dialog/RefferalsDialog";
 import UploadMovieForm from "./Forms/UploadMovieForm";
+import { useQueryClient } from "react-query";
 
 function AdminPanel({
   title,
@@ -45,6 +46,8 @@ function AdminPanel({
     onOpen: openAlert,
     onClose: closeAlert,
   } = useDisclosure();
+
+  const queryClient = useQueryClient()
 
   const {
     isOpen: openRefferalsDialog,
@@ -80,6 +83,7 @@ function AdminPanel({
     const res = await services.deleteMovie(id);
 
     if (res.status === 200 || res.status === 202 || res.status === 204) {
+      queryClient.invalidateQueries("movies")
       enqueueSnackbar("Se Ha borrado el elemento con exito", {
         persist: false,
         variant: "success",
@@ -95,13 +99,14 @@ function AdminPanel({
     closeAlert();
     setDeleteId(null);
     setDeleteText("");
-    window.location.reload();
+    
   };
 
   const handleDeleteGenre = async (id) => {
     const res = await services.deleteGenres(id);
     console.log(res);
     if (res.status === 200 || res.status === 202 || res.status === 204) {
+      queryClient.invalidateQueries("genres")
       enqueueSnackbar("Se Ha borrado el elemento con exito", {
         persist: false,
         variant: "success",
@@ -120,6 +125,7 @@ function AdminPanel({
   const handleDeleteUser = async (id) => {
     const res = await services.deleteUsers(id);
     if (res.status === 200 || res.status === 202 || res.status === 204) {
+      queryClient.invalidateQueries("users")
       enqueueSnackbar("Se Ha borrado el elemento con exito", {
         persist: false,
         variant: "success",

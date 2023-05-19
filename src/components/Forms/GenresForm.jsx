@@ -19,6 +19,7 @@ import React, { useEffect } from "react";
 import { set, useForm } from "react-hook-form";
 import { services } from "../../services/services";
 import { enqueueSnackbar } from "notistack";
+import { useQueryClient } from "react-query";
 
 const defaultValues = {
   genre: "",
@@ -28,12 +29,15 @@ function GenresForm({ isOpen, onOpen, onClose,  refetch }) {
   const { handleSubmit, register, setValue } = useForm({
     defaultValues: defaultValues,
   });
+  const queryClient = useQueryClient()
 
   const handleCreate = async (values) => {
     await services
       .createGenres(values.genre)
       .then((data) =>
-        {enqueueSnackbar("Se ha creado el genero con exito", {
+        {
+          queryClient.invalidateQueries("genres")
+          enqueueSnackbar("Se ha creado el genero con exito", {
           persist: false,
           variant: "success",
         })

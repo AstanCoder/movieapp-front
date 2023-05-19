@@ -19,7 +19,7 @@ import React, { useEffect, useState } from "react";
 import { set, useForm } from "react-hook-form";
 import { services } from "../../services/services";
 import { enqueueSnackbar } from "notistack";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { PanoramaFishEye, Watch } from "@mui/icons-material";
 
 const defaultValues = {
@@ -34,6 +34,9 @@ function UsersForm({ isOpen, onOpen, onClose, refetch }) {
     defaultValues: defaultValues,
   });
 
+
+  const queryClient = useQueryClient()
+
   const [see, setSee] = useState(false);
 
   const handleCreate = async (values) => {
@@ -47,6 +50,7 @@ function UsersForm({ isOpen, onOpen, onClose, refetch }) {
             persist: false,
           });
         } else {
+          queryClient.invalidateQueries("users")
           enqueueSnackbar("Se ha creado el usuario con exito", {
             persist: false,
             variant: "success",

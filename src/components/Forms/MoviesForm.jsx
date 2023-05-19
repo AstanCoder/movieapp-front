@@ -19,7 +19,7 @@ import React, { useEffect, useState } from "react";
 import { set, useForm } from "react-hook-form";
 import { services } from "../../services/services";
 import { useSnackbar } from "notistack";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { Spinner } from "@chakra-ui/react";
 import { getBase64 } from "../../utils/getBase64";
 
@@ -55,6 +55,8 @@ function MoviesForm({
       keepPreviousData: true,
     }
   );
+
+  const queryClient = useQueryClient()
 
   const { handleSubmit, register, setValue, watch } = useForm({
     defaultValues: defaultValues,
@@ -111,6 +113,7 @@ function MoviesForm({
         return await services
           .createMovie(values)
           .then((data) => {
+            queryClient.invalidateQueries("movies")
             enqueueSnackbar("Pelicula creada con exito", {
               persist: false,
               variant: "success",
@@ -140,6 +143,7 @@ function MoviesForm({
           return await services
             .updateMovie(values)
             .then((data) => {
+              queryClient.invalidateQueries("movies")
               enqueueSnackbar("Pelicula actualizada con exito", {
                 persist: false,
                 variant: "success",
@@ -164,6 +168,7 @@ function MoviesForm({
         return await services
           .updateMovie(values)
           .then((data) => {
+            queryClient.invalidateQueries("movies")
             enqueueSnackbar("Pelicula actualizada con exito", {
               persist: false,
               variant: "success",
