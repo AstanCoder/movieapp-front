@@ -45,7 +45,7 @@ const uploadMovie = async (formData) => {
     body: formData,
   };
   return await fetch(
-    "http://localhost:3000/movies/google/video/upload",
+    "http://yml-live.com/movies/google/video/upload",
     request
   ).then((data) => data.json());
 };
@@ -57,7 +57,7 @@ const updateMovieVideo = async (formData, id) => {
     body: formData,
   };
   return await fetch(
-    `http://localhost:3000/movies/google/video/update/${id}`,
+    `http://yml-live.com/movies/google/video/update/${id}`,
     request
   ).then((data) => data.json());
 };
