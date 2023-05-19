@@ -18,12 +18,16 @@ import {
 import { FaUserAlt, FaLock } from "react-icons/fa";
 import { useForm } from "react-hook-form";
 import { auth } from "../services/auth";
+import Cookies from "js-cookie";
+import { useAuth } from "../auth/Provider";
+import { enqueueSnackbar } from "notistack";
 
 const CFaUserAlt = chakra(FaUserAlt);
 const CFaLock = chakra(FaLock);
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const { authenticate } = useAuth();
 
   const defaultValues = {
     email: "",
@@ -36,13 +40,26 @@ const Login = () => {
 
   const handleShowClick = () => setShowPassword(!showPassword);
 
-  const handleLogin = async(values)=>{
-    await auth.login(values).then(data => {
-        if(data){
-          window.location.reload(false)
+  const handleLogin = async (values) => {
+    try {
+      await authenticate(values);
+      enqueueSnackbar("Ingreso exitoso", {
+        persist: false,
+        variant: "success",
+      });
+    } catch (err) {
+      console.log(err);
+      enqueueSnackbar(
+        err.responsee?.data?.message
+          ? err.response?.data?.message?.split(":")[1]
+          : "error al ingresar",
+        {
+          persist: false,
+          variant: "error",
         }
-    })
-  }
+      );
+    }
+  };
 
   return (
     <Flex
@@ -75,7 +92,12 @@ const Login = () => {
                     pointerEvents="none"
                     children={<CFaUserAlt color="gray.300" />}
                   />
-                  <Input type="email" placeholder="email address" name="email" {...register("email")}/>
+                  <Input
+                    type="email"
+                    placeholder="email address"
+                    name="email"
+                    {...register("email")}
+                  />
                 </InputGroup>
               </FormControl>
               <FormControl>
@@ -97,7 +119,6 @@ const Login = () => {
                     </Button>
                   </InputRightElement>
                 </InputGroup>
-                
               </FormControl>
               <Button
                 borderRadius={0}
@@ -112,7 +133,6 @@ const Login = () => {
           </form>
         </Box>
       </Stack>
-      
     </Flex>
   );
 };

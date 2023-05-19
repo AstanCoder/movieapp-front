@@ -3,7 +3,7 @@ import { getCookie } from "./cookies";
 const token = getCookie("token");
 
 const instance = new Axios({
-    baseURL: "http://yml-live.com:3000"
+    baseURL: "http://localhost:3000"
 });
 
 instance.request({

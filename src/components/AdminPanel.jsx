@@ -22,9 +22,11 @@ import {
 import { DeleteIcon, ViewIcon } from "@chakra-ui/icons";
 import React, { useState } from "react";
 import { services } from "../services/services";
-import AlertDialog from "../components/Dialog/AlertDialog";
+import AlertDialog from "./Dialog/AlertDialog";
 import { enqueueSnackbar } from "notistack";
 import { Edit, RemoveRedEye } from "@mui/icons-material";
+import RefferalsDialog from "./Dialog/RefferalsDialog";
+import UploadMovieForm from "./Forms/UploadMovieForm";
 
 function AdminPanel({
   title,
@@ -33,12 +35,26 @@ function AdminPanel({
   handleUpdate,
   selectedPage,
 }) {
+  const [id, setId] = useState("");
+  const [movieid, setMovieid] = useState("");
+  const [name, setName] = useState("");
   const [deleteId, setDeleteId] = useState(null);
   const [deleteText, setDeleteText] = useState("");
   const {
     isOpen: alertOpen,
     onOpen: openAlert,
     onClose: closeAlert,
+  } = useDisclosure();
+
+  const {
+    isOpen: openRefferalsDialog,
+    onOpen: openRefferals,
+    onClose: closeRefferalsDialog,
+  } = useDisclosure();
+  const {
+    isOpen: openVideoDialog,
+    onOpen: openVideo,
+    onClose: closeVideoDialog,
   } = useDisclosure();
 
   const onDeleteMovie = (id) => {
@@ -131,6 +147,23 @@ function AdminPanel({
     }
   };
 
+  const handleRefferals = (id, name) => {
+    setId(id);
+    setName(name);
+    openRefferals();
+  };
+
+  const handleCloseRefferals = () => {
+    setId("");
+    setName("");
+    closeRefferalsDialog();
+  };
+
+  const handleUpdateMovieVideo = (id) => {
+    setMovieid(id);
+    openVideo();
+  };
+
   return (
     <>
       <Modal isOpen={alertOpen} onClose={closeAlert}>
@@ -147,6 +180,18 @@ function AdminPanel({
           </ModalFooter>
         </ModalContent>
       </Modal>
+      <RefferalsDialog
+        isOpen={openRefferalsDialog}
+        onClose={handleCloseRefferals}
+        ref_id={id}
+        ref_name={name}
+      />
+      <UploadMovieForm
+        isOpen={openVideoDialog}
+        isUpdate={true}
+        onClose={closeVideoDialog}
+        id={movieid}
+      />
       <TableContainer mt={2}>
         <Button variant="outline" onClick={handleAction}>
           Crear
@@ -155,17 +200,17 @@ function AdminPanel({
           <TableCaption>{title}</TableCaption>
           <Thead>
             <Tr>
-              <Th>ID</Th>
+              <Th>#</Th>
               <Th>Nombre</Th>
               {selectedPage === "Usuarios" ? <Th>Rol</Th> : ""}
               <Th></Th>
             </Tr>
           </Thead>
           <Tbody>
-            {options?.map((option) => {
+            {options?.map((option, i) => {
               return (
                 <Tr key={option.id}>
-                  <Td>{option.id}</Td>
+                  <Td>{i + 1}</Td>
                   <Td>{option.name}</Td>
                   {selectedPage === "Usuarios" ? <Td>{option.role}</Td> : ""}
                   <Td key={option.id} p={1}>
@@ -185,11 +230,34 @@ function AdminPanel({
                         }
                       }}
                     ></IconButton>
+                    {selectedPage === "Usuarios" ? (
+                      <Button
+                        rounded="3xl"
+                        ml={1}
+                        onClick={() => handleRefferals(option.id, option.name)}
+                      >
+                        Ver Creados
+                      </Button>
+                    ) : (
+                      ""
+                    )}
                   </Td>
                   {selectedPage === "Peliculas" && (
-                    <Td>
-                      <IconButton icon={<Edit />} onClick={()=>handleUpdate(option.id)}></IconButton>
-                    </Td>
+                    <>
+                      <Td>
+                        <IconButton
+                          icon={<Edit />}
+                          onClick={() => handleUpdate(option.id)}
+                        ></IconButton>
+                      </Td>
+                      <Td>
+                        <Button
+                          onClick={() => handleUpdateMovieVideo(option.id)}
+                        >
+                          Cambiar Video
+                        </Button>
+                      </Td>
+                    </>
                   )}
                 </Tr>
               );

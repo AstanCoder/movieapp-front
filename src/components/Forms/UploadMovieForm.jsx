@@ -26,7 +26,7 @@ const defaultValues = {
   files: "",
 };
 
-function UploadMovieForm({ isOpen, onOpen, onClose }) {
+function UploadMovieForm({ isOpen, onOpen, onClose, isUpdate, id }) {
   const [uploadedData, setUploadedData] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -41,12 +41,35 @@ function UploadMovieForm({ isOpen, onOpen, onClose }) {
   } = useDisclosure();
 
   const handleCreate = async (values) => {
+    if (isUpdate) {
+      let formData = new FormData();
+      formData.append("file", values.files[0]);
+      setIsUploading(true);
+
+      const res = await services.updateMovieVideo(formData, id);
+
+      if (res.message) {
+        setIsUploading(false);
+
+        enqueueSnackbar("Se ha subido el archivo con exito", {
+          persist: false,
+          variant: "success",
+        });
+
+        return onClose();
+      } else {
+        return enqueueSnackbar("Ha ocurrido un error al subir el archivo", {
+          persist: false,
+          variant: "error",
+        });
+      }
+    }
     let formData = new FormData();
     formData.append("file", values.files[0]);
     setIsUploading(true);
 
     const res = await services.uploadMovie(formData);
-    
+
     if (res.message) {
       enqueueSnackbar("Se ha subido el archivo con exito", {
         persist: false,
@@ -65,7 +88,6 @@ function UploadMovieForm({ isOpen, onOpen, onClose }) {
 
     setIsUploading(false);
     openDetails();
-    
   };
   return (
     <Modal isOpen={isOpen} onClose={onClose}>

@@ -1,6 +1,7 @@
 import {
   Button,
   FormControl,
+  IconButton,
   Input,
   Modal,
   ModalBody,
@@ -14,10 +15,12 @@ import {
   Text,
   Textarea,
 } from "@chakra-ui/react";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { set, useForm } from "react-hook-form";
 import { services } from "../../services/services";
 import { enqueueSnackbar } from "notistack";
+import { useQuery } from "react-query";
+import { PanoramaFishEye, Watch } from "@mui/icons-material";
 
 const defaultValues = {
   name: "",
@@ -26,22 +29,32 @@ const defaultValues = {
   role: "",
 };
 
-function UsersForm({ isOpen, onOpen, onClose }) {
+function UsersForm({ isOpen, onOpen, onClose, refetch }) {
   const { handleSubmit, register, setValue } = useForm({
     defaultValues: defaultValues,
   });
 
+  const [see, setSee] = useState(false);
+
   const handleCreate = async (values) => {
     const res = await services
       .createUsers(values)
-      .then((data) =>
-       { enqueueSnackbar("Se ha creado el usuario con exito", {
-          persist: false,
-          variant: "success",
-        })
-        onClose()
-      }
-      )
+      .then((data) => {
+        if (data.status !== 200 && data.status !== 202) {
+          const message = JSON.parse(data?.data);
+          enqueueSnackbar(message.message, {
+            variant: "error",
+            persist: false,
+          });
+        } else {
+          enqueueSnackbar("Se ha creado el usuario con exito", {
+            persist: false,
+            variant: "success",
+          });
+
+          onClose();
+        }
+      })
       .catch((err) => {
         return enqueueSnackbar("Ha ocurrido un error al crear el usuario", {
           persist: false,
@@ -74,16 +87,26 @@ function UsersForm({ isOpen, onOpen, onClose }) {
                 </Stack>
                 <Stack direction="column">
                   <Text as="p">Contraseña</Text>
-                  <Input
-                    type="password"
-                    name="password"
-                    {...register("password")}
-                  ></Input>
+                  <Stack direction="row">
+                    <Input
+                      type={see ? "text":"password"}
+                      name="password"
+                      {...register("password")}
+                    ></Input>
+                    <Button
+                      onClick={() => {
+                        setSee(!see);
+                      }}
+                    >
+                      {!see ? "Ver" : "Ocultar"}
+                    </Button>
+                  </Stack>
                 </Stack>
                 <Select
-                  placeholder={"Seleccione uno"}
+                  placeholder={"Seleccione un rol"}
                   name="role"
                   {...register("role")}
+                  
                 >
                   <option value={"moderator"}>Moderador</option>
                   <option value={"user"}>Usuario</option>

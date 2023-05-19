@@ -45,7 +45,19 @@ const uploadMovie = async (formData) => {
     body: formData,
   };
   return await fetch(
-    "http://yml-live.com/movies/google/video/upload",
+    "http://localhost:3000/movies/google/video/upload",
+    request
+  ).then((data) => data.json());
+};
+
+const updateMovieVideo = async (formData, id) => {
+  const request = {
+    method: "POST",
+    headers: { "auth-token": getCookie("token") },
+    body: formData,
+  };
+  return await fetch(
+    `http://localhost:3000/movies/google/video/update/${id}`,
     request
   ).then((data) => data.json());
 };
@@ -123,6 +135,24 @@ const updateMovie = async (values) => {
   });
 };
 
+const getProfile = async (token) => {
+  return instance.get("/auth/profile", {
+    headers: {
+      "Content-Type": "application/json",
+      "auth-token": token,
+    },
+  });
+};
+
+export const getRefferals = async (id) => {
+  return instance.get(`/user/affilies/${id}`, {
+    headers: {
+      "Content-Type": "application/json",
+      "auth-token": getCookie("token"),
+    },
+  });
+};
+
 export const services = {
   listMovies,
   createMovie,
@@ -134,5 +164,8 @@ export const services = {
   deleteGenres,
   deleteMovie,
   deleteUsers,
-  updateMovie
+  updateMovie,
+  getProfile,
+  getRefferals,
+  updateMovieVideo
 };

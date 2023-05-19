@@ -1,6 +1,7 @@
 import {
   Button,
   FormControl,
+  Image,
   Input,
   Modal,
   ModalBody,
@@ -14,12 +15,13 @@ import {
   Text,
   Textarea,
 } from "@chakra-ui/react";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { set, useForm } from "react-hook-form";
 import { services } from "../../services/services";
 import { useSnackbar } from "notistack";
 import { useQuery } from "react-query";
 import { Spinner } from "@chakra-ui/react";
+import { getBase64 } from "../../utils/getBase64";
 
 const defaultValues = {
   originalTitle: "",
@@ -42,7 +44,10 @@ function MoviesForm({
   closeUploadForm,
   isUpdate,
   updateValues,
+  refetch,
 }) {
+  const [imageUrl, setImageUrl] = useState("");
+  const [updateImage, setUpdateImage] = useState(false);
   const { data, isLoading, isSuccess, isError } = useQuery(
     ["genres"],
     services.listGenres,
@@ -51,9 +56,20 @@ function MoviesForm({
     }
   );
 
-  const { handleSubmit, register, setValue } = useForm({
+  const { handleSubmit, register, setValue, watch } = useForm({
     defaultValues: defaultValues,
   });
+
+  const image_file = watch("backdropPath");
+
+  const selectedImage = image_file[0];
+
+  useEffect(() => {
+    if (selectedImage) {
+      console.log(selectedImage);
+      setImageUrl(URL.createObjectURL(selectedImage));
+    }
+  }, [selectedImage]);
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -67,61 +83,112 @@ function MoviesForm({
 
   useEffect(() => {
     if (isUpdate) {
-      const keys = Object.keys(updateValues);
+      let _updatedValues = { ...updateValues };
+      delete _updatedValues.backdropPath;
+      let keys = Object.keys(_updatedValues);
       console.log(keys);
       console.log(isUpdate);
       console.log(updateValues);
       for (let i = 0; i < keys.length; i++) {
-        setValue(`${keys[i]}`, updateValues[`${keys[i]}`]);
+        setValue(`${keys[i]}`, _updatedValues[`${keys[i]}`]);
+      }
+      if (!imageUrl) {
+        setValue("backdropPath", [""]);
+        setImageUrl(updateValues.backdropPath);
       }
     }
   }, [isUpdate, updateValues, setValue]);
 
   const handleCreate = async (values) => {
     if (!isUpdate) {
-      return await services
-        .createMovie(values)
-        .then((data) => {
-          enqueueSnackbar("Pelicula creada con exito", {
-            persist: false,
-            variant: "success",
-          });
-          console.log(data);
-          onClose();
-          window.location.reload();
-          closeUploadForm();
-        })
-        .catch((err) =>
-          enqueueSnackbar("Ha ocurrido un error al crear la pelicula", {
-            persist: false,
-            variant: "error",
+      const backdrop = values.backdropPath[0];
+
+      getBase64(backdrop).then(async (res) => {
+        values.backdropPath = res;
+        values.images = true;
+        console.log(values);
+
+        return await services
+          .createMovie(values)
+          .then((data) => {
+            enqueueSnackbar("Pelicula creada con exito", {
+              persist: false,
+              variant: "success",
+            });
+            console.log(data);
+            onClose();
+
+            closeUploadForm();
           })
-        );
+          .catch((err) =>
+            enqueueSnackbar("Ha ocurrido un error al crear la pelicula", {
+              persist: false,
+              variant: "error",
+            })
+          );
+      });
     } else {
       values.id = updateValues.id;
-      return await services
-        .updateMovie(values)
-        .then((data) => {
-          enqueueSnackbar("Pelicula actualizada con exito", {
-            persist: false,
-            variant: "success",
-          });
-          console.log(data);
-          onClose();
-          window.location.reload();
-          closeUploadForm();
-        })
-        .catch((err) =>
-          enqueueSnackbar("Ha ocurrido un error al actualizar la pelicula", {
-            persist: false,
-            variant: "error",
+      if (imageUrl !== updateValues.backdropPath) {
+        const backdrop = values.backdropPath[0]
+        
+        getBase64(backdrop).then(async (res) => {
+          values.backdropPath = res;
+          values.images = true;
+          values.update_image = true;
+          console.log(values);
+          return await services
+            .updateMovie(values)
+            .then((data) => {
+              enqueueSnackbar("Pelicula actualizada con exito", {
+                persist: false,
+                variant: "success",
+              });
+              console.log(data);
+
+              return onClose();
+            })
+            .catch((err) =>
+              enqueueSnackbar(
+                "Ha ocurrido un error al actualizar la pelicula",
+                {
+                  persist: false,
+                  variant: "error",
+                }
+              )
+            );
+        });
+      } else {
+        values.update_image = false
+        values.backdropPath = updateValues.backdropPath
+        return await services
+          .updateMovie(values)
+          .then((data) => {
+            enqueueSnackbar("Pelicula actualizada con exito", {
+              persist: false,
+              variant: "success",
+            });
+            console.log(data);
+            onClose();
+
+            return closeUploadForm();
           })
-        );
+          .catch((err) =>
+            enqueueSnackbar("Ha ocurrido un error al actualizar la pelicula", {
+              persist: false,
+              variant: "error",
+            })
+          );
+      }
     }
+  };
+  const handleClose = () => {
+    setImageUrl("");
+    onClose();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={handleClose} size="full">
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Crear Pelicula</ModalHeader>
@@ -139,17 +206,26 @@ function MoviesForm({
                   ></Input>
                 </Stack>
                 <Stack direction="column">
-                  <Text as="p">Enlace de la imagen de la pelicula</Text>
+                  <Text as="p">Imagen de la pelicula</Text>
                   <Input
-                    type="text"
+                    type={"file"}
+                    multiple={false}
                     name="backdropPath"
                     {...register("backdropPath")}
                   ></Input>
+                  <Image
+                    display={imageUrl ? "unset" : "none"}
+                    boxSize="150px"
+                    objectFit="cover"
+                    src={imageUrl}
+                    alt="imagen seleccionada"
+                  />
                 </Stack>
                 <Stack direction="column">
                   <Text as="p">Lenguage Original</Text>
                   <Input
                     type="text"
+                    accept="image/*"
                     name="originalLanguage"
                     {...register("originalLanguage")}
                   ></Input>
@@ -180,30 +256,7 @@ function MoviesForm({
                     {...register("title")}
                   ></Input>
                 </Stack>
-                <Stack direction="column">
-                  <Text as="p">Enlace de la imagen del poster</Text>
-                  <Input
-                    type="text"
-                    name="posterPath"
-                    {...register("posterPath")}
-                  ></Input>
-                </Stack>
-                <Stack direction="column">
-                  <Text as="p">Enlace del video</Text>
-                  <Input
-                    type="text"
-                    name="video"
-                    {...register("video")}
-                  ></Input>
-                </Stack>
-                <Stack direction="column">
-                  <Text as="p">Nombre remoto del archivo</Text>
-                  <Input
-                    type="text"
-                    name="remote_filename"
-                    {...register("remote_filename")}
-                  ></Input>
-                </Stack>
+
                 <Stack direction="column">
                   <Text as="p">Genero</Text>
                   <Select
@@ -212,7 +265,7 @@ function MoviesForm({
                     {...register("genre_id")}
                   >
                     {isSuccess ? (
-                      data.results.map((genre) => (
+                      data?.results?.map((genre) => (
                         <option key={genre._id} value={genre._id}>
                           {genre.genre}
                         </option>

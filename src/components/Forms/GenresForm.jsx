@@ -13,6 +13,7 @@ import {
   Stack,
   Text,
   Textarea,
+ 
 } from "@chakra-ui/react";
 import React, { useEffect } from "react";
 import { set, useForm } from "react-hook-form";
@@ -23,7 +24,7 @@ const defaultValues = {
   genre: "",
 };
 
-function GenresForm({ isOpen, onOpen, onClose }) {
+function GenresForm({ isOpen, onOpen, onClose,  refetch }) {
   const { handleSubmit, register, setValue } = useForm({
     defaultValues: defaultValues,
   });
@@ -36,6 +37,7 @@ function GenresForm({ isOpen, onOpen, onClose }) {
           persist: false,
           variant: "success",
         })
+        
         onClose()
       }
       )
